@@ -42,7 +42,7 @@ def get_gongshi_page(pn):
     return contents
 
 if __name__ == '__main__':
-    max_page = 10
+    max_page = 50
 
     all_contents = []
     for pn in xrange(1, max_page+1):
