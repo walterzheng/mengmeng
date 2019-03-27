@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 date_format_ro = re.compile(r'\d\d\d\d-\d\d-\d\d')
 
 # 证监会公示网页
-post_url = 'http://ndes.csrc.gov.cn/alappl/home/volunteerLift.do'
+post_url = 'http://neris.csrc.gov.cn/alappl/home/volunteerLift.do'
 
 def get_gongshi_page(pn):
     '''从每个page中爬title和date'''
@@ -46,6 +46,7 @@ if __name__ == '__main__':
 
     all_contents = []
     for pn in xrange(1, max_page+1):
+        print "processing page %d, please wait~" % pn
         all_contents.append(get_gongshi_page(pn))
 
     with open(u'机构公示.txt', "w") as ofid:
