@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import collections
 
 import itertools
 import socket
@@ -88,9 +89,24 @@ if __name__ == '__main__':
         print "processing page %d, please wait~" % pn
         all_contents.append(get_gongshi_page(pn))
 
+    valid_action = collections.OrderedDict()
+    valid_action[u"接收材料"] = ""
+    valid_action[u"补正通知"] = ""
+    valid_action[u"接收补正材料"] = ""
+    valid_action[u"受理通知"] = ""
+    valid_action[u"一次书面反馈"] = ""
+    valid_action[u"接收书面回复"] = ""
+    valid_action[u"行政许可决定书"] = ""
+    valid_action[u"二次书面反馈"] = ""
+    valid_action[u"一次中止审查通知"] = ""
+    valid_action[u"申请人主动撤销"] = ""
+    valid_action[u"终止审查通知"] = ""
+
     with open(u'机构公示.txt', "w") as ofid:
-        for idx in xrange(len(all_contents)):
-            for title, date, table in all_contents[idx]:
-                # ofid.write('%d\t%s\t%s\n'%(idx+1, title.encode('utf8'), date.encode('utf8'), ))
+        ofid.write('%s|%s|%s\n'%(u'页码'.encode('utf8'), u'标题'.encode('utf8'), u"|".join(valid_action.keys()).encode('utf8')))
+        for idx in xrange(start_page, max_page+start_page):
+            for title, date, table in all_contents[idx-start_page]:
+                table_content_dict = valid_action.copy()
                 for table_content in table:
-                    ofid.write('%d\t%s\t%s\t%s\n'%(idx+1, title.encode('utf8'), table_content[0].encode('utf8'), table_content[1].encode('utf8')))
+                    table_content_dict[table_content[0]] = table_content[1]
+                ofid.write('%d|%s|%s\n'%(idx+1, title.encode('utf8'), u"|".join(table_content_dict.values()).encode('utf8')))
