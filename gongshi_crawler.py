@@ -12,12 +12,12 @@ from bs4 import BeautifulSoup
 date_format_ro = re.compile(r'\d\d\d\d-\d\d-\d\d')
 
 # 证监会公示网页
-post_url = 'http://neris.csrc.gov.cn/alappl/home/volunteerLift.do'
+post_url = 'https://neris.csrc.gov.cn/alappl/home/volunteerLift.do'
 
 def get_gongshi_page(pn):
     '''从每个page中爬title和date'''
     paras_dict = {'edCde':'300009', 'pageNo':str(pn), 'pageSize':'10'}
-    doc = requests.post(post_url, paras_dict)
+    doc = requests.post(post_url, paras_dict, verify = False)
 
     soup = BeautifulSoup(doc.text, "lxml")
     titles = soup.find_all("div", {"class":"titleshow"})
