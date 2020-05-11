@@ -75,6 +75,8 @@ def get_gongshi_page(pn):
                     if table_cur_line < 3:
                         continue
                     td_tags = table_tag.find_all("td")
+                    if len(td_tags) != 2:
+                        continue
                     table_content.append((get_deep_text(td_tags[0]), get_deep_text(td_tags[1])))
         
         contents.append((title_text, title_date, table_content))
