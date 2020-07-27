@@ -104,11 +104,11 @@ if __name__ == '__main__':
     valid_action["申请人主动撤销"] = ""
     valid_action["终止审查通知"] = ""
 
-    with open('机构公示.txt', "w") as ofid:
+    with open('机构公示.txt', "w", encoding='utf-8') as ofid:
         ofid.write('%s|%s|%s\n'%('页码', '标题', "|".join(valid_action.keys())))
         for idx in range(start_page, max_page+start_page):
             for title, date, table in all_contents[idx-start_page]:
                 table_content_dict = valid_action.copy()
                 for table_content in table:
                     table_content_dict[table_content[0]] = table_content[1]
-                ofid.write('%d|%s|%s\n'%(idx+1, title, "|".join(table_content_dict.values())))
+                ofid.write('%d|%s|%s\n'%(idx, title, "|".join(table_content_dict.values())))
