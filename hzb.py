@@ -8,7 +8,12 @@ def process():
     filename = '创业板压力测试模板-test-2-计算.xlsx'
 
     data = pd.read_excel(filename, "资产账户列表", engine="openpyxl")
-    zhengquan = pd.read_excel(filename, "创业板证券底表", engine="openpyxl")
+    #zhengquan = pd.read_excel(filename, "创业板证券底表", engine="openpyxl")
+    zhengquan_raw = pd.read_excel(filename, "创业板证券底表", engine="openpyxl")
+    gongyunjiage = pd.read_excel(filename, "启用公允价格汇总表", engine="openpyxl")[['证券代码', '公允价格']]
+    zhengquan_raw['证券代码'] = zhengquan_raw['证券代码'].apply(lambda s: "%06d"%s)
+    gongyunjiage['证券代码'] = gongyunjiage['证券代码'].apply(lambda s: "%06d"%s)
+
     xinyongzhengquan = pd.read_excel(filename, "创业板信用证券底表", engine="openpyxl")
     xinyongzichan = pd.read_excel(filename, "信用资产底表", engine="openpyxl")[['资产账户', '警戒线比例', '平仓线比例', '负债总额', '担保资产', '个人维持担保比例值(不含场外资产)']].drop_duplicates()
     
@@ -18,8 +23,10 @@ def process():
     data2.rename(columns={'警戒线比例': '预警线', '平仓线比例': '平仓线', '个人维持担保比例值(不含场外资产)': '维保比例'},
                     inplace=True)
 
-    chicangshizhi = zhengquan.groupby('资产账户').agg({'证券市值': 'sum'})
-    data3 = data2.merge(chicangshizhi, on='资产账户', how='left').rename(columns={'证券市值': '创业板持仓市值'})
+    zhengquan = zhengquan_raw.merge(gongyunjiage, on="证券代码", how="left")
+    zhengquan['证券市值_modified'] = zhengquan.apply(lambda row: row['证券市值'] if np.isnan(row['公允价格']) else row['公允价格'] * row['当前数量'], axis=1)
+    chicangshizhi = zhengquan.groupby('资产账户').agg({'证券市值_modified': 'sum'})
+    data3 = data2.merge(chicangshizhi, on='资产账户', how='left').rename(columns={'证券市值_modified': '创业板持仓市值'})
 
     data3['创业板持仓集中度'] = data3['创业板持仓市值'] / data3['担保资产']
 
