@@ -45,7 +45,7 @@ def get_deep_text(tag):
 def get_gongshi_page(pn):
     '''从每个page中爬title和date'''
     paras_dict = {'edCde':'300009', 'pageNo':str(pn), 'pageSize':'10'}
-    doc = requests.post(post_url, paras_dict, verify = False)
+    doc = requests.get(post_url, paras_dict, verify = False)
 
     soup = BeautifulSoup(doc.text, "lxml")
     titles = soup.find_all("div", {"class":"titleshow"})
