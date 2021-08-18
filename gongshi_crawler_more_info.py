@@ -45,7 +45,23 @@ def get_deep_text(tag):
 def get_gongshi_page(pn):
     '''从每个page中爬title和date'''
     paras_dict = {'edCde':'300009', 'pageNo':str(pn), 'pageSize':'10'}
-    doc = requests.get(post_url, paras_dict, verify = False)
+    raw_headers = '''Host: neris.csrc.gov.cn
+                        Connection: keep-alive
+                        sec-ch-ua: "Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"
+                        sec-ch-ua-mobile: ?0
+                        Upgrade-Insecure-Requests: 1
+                        User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36
+                        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9
+                        Sec-Fetch-Site: same-origin
+                        Sec-Fetch-Mode: navigate
+                        Sec-Fetch-User: ?1
+                        Sec-Fetch-Dest: iframe
+                        Referer: https://neris.csrc.gov.cn/alappl/home/volunteerLift?edCde=300009
+                        Accept-Encoding: gzip, deflate, br
+                        Accept-Language: zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7
+                        Cookie: JSESSIONID=2E39879D44E93612666AA83F17A8C883; fromDetail=false'''
+    headers = dict([[h.partition(':')[0].strip(), h.partition(':')[2].strip()] for h in raw_headers.split('\n')])
+    doc = requests.get(post_url, paras_dict, headers = headers, verify = False)
 
     soup = BeautifulSoup(doc.text, "lxml")
     titles = soup.find_all("div", {"class":"titleshow"})
@@ -84,7 +100,7 @@ def get_gongshi_page(pn):
 
 if __name__ == '__main__':
     start_page = 1 # 从第几页开始拉数据
-    max_page = 5 # 共拉取多少页的数据 
+    max_page = 10 # 共拉取多少页的数据 
 
     all_contents = []
     for pn in range(start_page, max_page+start_page):
