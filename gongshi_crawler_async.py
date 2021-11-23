@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 使用前先执行 pip install aiofiles
+# 使用前先执行 pip install aiohttp
 import collections
 import aiohttp
 import asyncio
