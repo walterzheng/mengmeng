@@ -83,18 +83,12 @@ def get_gongshi_page(pn):
             if cur_tag.name == "table" and len(table_content) == 0:
                 # table的第一行为“进度追踪”，第二行为标题行“任务名称 | 完成时间”，因此从第三行开始解析
                 # table的每一行有两列
-                table_cur_line = 0
-                for table_tag in cur_tag.children:
-                    if not hasattr(table_tag, "text"):
-                        continue
-                    table_cur_line += 1
-                    if table_cur_line < 3:
-                        continue
+                table_tag_list = cur_tag.find_all("tr")
+                for table_tag in table_tag_list[2:]:
                     td_tags = table_tag.find_all("td")
                     if len(td_tags) != 2:
                         continue
-                    table_content.append((get_deep_text(td_tags[0]), get_deep_text(td_tags[1])))
-        
+                    table_content.append((td_tags[0].text.strip(), td_tags[1].text.strip()))
         contents.append((title_text, title_date, table_content))
     return contents
 
