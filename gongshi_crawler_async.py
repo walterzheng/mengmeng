@@ -10,9 +10,9 @@ import re
 from bs4 import BeautifulSoup
 
 # 爬取前MAX_PAGE页
-MAX_PAGE = 100
+MAX_PAGE = 300
 
-NUM_PRODUCERS = 8
+NUM_PRODUCERS = 16
 NUM_HTML_CONSUMERS = NUM_PRODUCERS * 2
 
 # 证监会公示网页

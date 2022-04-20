@@ -28,7 +28,7 @@ def get_file_list(path):
 def process(extract_file_list: list, out_path: str):
     if not os.path.exists(out_path):
         os.mkdir(out_path)
-    with ThreadPoolExecutor(max_workers=4) as pool:
+    with ThreadPoolExecutor(max_workers=8) as pool:
         feature_list = []
         for infile in extract_file_list:
             filename = os.path.basename(infile)[:-4]
