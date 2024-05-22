@@ -6,42 +6,41 @@ import asyncio
 import logging
 import time
 import re
+import json
 
-from bs4 import BeautifulSoup
+from datetime import datetime
 
 # 爬取前MAX_PAGE页
-MAX_PAGE = 300
+MAX_PAGE = 20
 
-NUM_PRODUCERS = 16
-NUM_HTML_CONSUMERS = NUM_PRODUCERS * 2
+NUM_PRODUCERS = 3
+NUM_HTML_CONSUMERS = NUM_PRODUCERS
 
 # 证监会公示网页
-BASE_URL = 'https://neris.csrc.gov.cn/alappl/home/volunteerLift.do'
+BASE_URL = 'https://neris.csrc.gov.cn/alappl/home1/newOnlinealog'
 
 HEADERS_STR = '''
-    Host: neris.csrc.gov.cn
-    Connection: keep-alive
-    sec-ch-ua: "Chromium";v="92", " Not A;Brand";v="99", "Google Chrome";v="92"
-    sec-ch-ua-mobile: ?0
-    Upgrade-Insecure-Requests: 1
-    User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36
-    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9
-    Sec-Fetch-Site: same-origin
-    Sec-Fetch-Mode: navigate
-    Sec-Fetch-User: ?1
-    Sec-Fetch-Dest: iframe
-    Referer: https://neris.csrc.gov.cn/alappl/home/volunteerLift?edCde=300009
-    Accept-Encoding: gzip, deflate, br
-    Accept-Language: zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7
-    Cookie: JSESSIONID=2E39879D44E93612666AA83F17A8C883; fromDetail=false
-'''
-HEADERS = dict([[h.partition(':')[0].strip(), h.partition(':')[2].strip()]
-                for h in HEADERS_STR.split('\n')])
+Accept-Encoding:gzip, deflate, br
+Accept-Language:zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7
+Cookie:JSESSIONID=73509259A4CB5A152E4779E1803B4792
+Referer:https://neris.csrc.gov.cn/alappl/home/gongshi
+Sec-Ch-Ua:"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"
+Sec-Ch-Ua-Mobile:?0
+Sec-Ch-Ua-Platform:"macOS"
+Sec-Fetch-Dest:empty
+Sec-Fetch-Mode:cors
+Sec-Fetch-Site:same-origin
+User-Agent:Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36
+X-Requested-With:XMLHttpRequest'''
+
 
 DATE_FORMAT_RO = re.compile(r'\d\d\d\d-\d\d-\d\d')
 
 async def featch_data(pn: int, session: aiohttp.ClientSession) -> str:
-    paras_dict = {'edCde':'300009', 'pageNo':str(pn), 'pageSize':'10'}
+    paras_dict = {'pageNo':str(pn), 'pageSize':'10', 'appMatrCde': '', 'appMatrName': '', 'apptName': ''}
+
+    HEADERS = dict([[h.partition(':')[0].strip(), h.partition(':')[2].strip()]
+                for h in HEADERS_STR.format(pn).split('\n')])
     async with session.get(BASE_URL, params = paras_dict, headers = HEADERS) as resp:
         return await resp.text()
 
@@ -97,7 +96,7 @@ def write_out(data: dict) -> None:
 
 async def main(prod_num: int, html_con_num: int):
     data = dict()
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False)) as session:
         html_q = asyncio.Queue()
         prod_num = min(prod_num, MAX_PAGE)
         producer_list = [asyncio.create_task(producer(idx, page_range, html_q, session))
@@ -118,34 +117,17 @@ def divide_page(prod_num):
         yield (i, range(left, right))
 
 def parse_data(html: str):
-    soup = BeautifulSoup(html, "lxml")
-    titles = soup.find_all("div", {"class":"titleshow"})
-
     contents = []
-    for title in titles:
-        title_text = title.text.strip()
-        title_date = ""
+
+    parsed_html = json.loads(html)
+    for data in parsed_html['appltList']:
+        title = data['appMatrName']
         table_content = []
-        cur_tag = title
-        for i in range(7): # 最多向后检查7个sibling，检查是否有时间串
-            cur_tag = cur_tag.next_sibling # 这里有坑，'\n'也算一个sibling
-            if not hasattr(cur_tag, "text"):
-                continue
-            date_search = DATE_FORMAT_RO.search(cur_tag.text)
-            if date_search and title_date == "":
-                title_date = date_search.group()
-            
-            if cur_tag.name == "table" and len(table_content) == 0:
-                # table的第一行为“进度追踪”，第二行为标题行“任务名称 | 完成时间”，因此从第三行开始解析
-                # table的每一行有两列
-                table_tag_list = cur_tag.find_all("tr")
-                for table_tag in table_tag_list[2:]:
-                    td_tags = table_tag.find_all("td")
-                    if len(td_tags) != 2:
-                        continue
-                    table_content.append((td_tags[0].text.strip(), td_tags[1].text.strip()))
-        
-        contents.append((title_text, title_date, table_content))
+        for table_line in data['aprvSchdPubFlowPOs']:
+            dt_object = datetime.fromtimestamp(int(table_line['foundTime'])//1000)
+            table_content.append((table_line['taskName'], dt_object.strftime('%Y-%m-%d')))
+
+        contents.append((title, '', table_content))
     return contents
 
 if __name__ == '__main__':
